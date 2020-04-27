@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/spotlistify.iml" filepath="$PROJECT_DIR$/.idea/spotlistify.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/spotlistify-react.iml" filepath="$PROJECT_DIR$/.idea/spotlistify-react.iml" />
     </modules>
   </component>
 </project>
