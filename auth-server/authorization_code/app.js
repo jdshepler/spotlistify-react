@@ -40,37 +40,6 @@ app.use(express.static(__dirname + '/public'))
     .use(cors())
     .use(cookieParser());
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    next();
-});
-
-app.get('/search/artists', (req, res) => {
-    const searchArtistURL = "https://api.setlist.fm/rest/1.0/search/artists";
-    const headers = {
-        'Accept': 'application/json',
-        'x-api-key': 'FsKLJ5csXlSKHt5H_rSLcCxNt3gg1oegOmKB'
-    };
-
-    const params = new URLSearchParams({
-        artistName: "Tame Impala",
-        p: "1",
-        sort: "sortName"
-    }).toString();
-
-    const options = {
-        url: `${searchArtistURL}?${params}`,
-        headers: headers
-    };
-
-    request(options, (error, response, body) => {
-        if (error || response.statusCode !== 200) {
-            return res.status(500).json({ type: 'error', message: error.message });
-        }
-
-        res.json(JSON.parse(body));
-})});
-
 app.get('/login', function(req, res) {
 
     var state = generateRandomString(16);
