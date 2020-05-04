@@ -7,10 +7,12 @@ import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
+import Alert from '@material-ui/lab/Alert';
 import styled from 'styled-components';
 
 
 const spotifyWebApi = new Spotify();
+let key = 0;
 
 export default class App extends Component {
     constructor(props) {
@@ -27,7 +29,7 @@ export default class App extends Component {
             artistSetDate: '',
             artistSetURIs: [],
             playlistID: '',
-
+            playlistTracks: [],
         }
         if (token){
             spotifyWebApi.setAccessToken(token)
@@ -56,9 +58,21 @@ export default class App extends Component {
         let query = songName + " " + artistName;
         spotifyWebApi.searchTracks(query)
             .then(res => {
+                key++;
                 this.state.artistSetURIs.push(res.tracks.items[0].uri)
+                this.state.playlistTracks.push(
+                    <Alert severity="success" key={key} style={{margin: '5px'}}>
+                        Success! <b> {songName} by {artistName} </b> added to playlist
+                    </Alert>);
             })
-            .catch(err => console.log(err));
+            .catch(err => {
+                key++;
+                this.state.playlistTracks.push(
+                    <Alert severity="error" key={key} style={{margin: '5px'}}>
+                        Error! Could not find <b> {songName} by {artistName} </b>
+                    </Alert>);
+                console.log(err)
+            });
     }
 
     getUserID() {
@@ -78,7 +92,7 @@ export default class App extends Component {
             .then(res => {
                 this.setState({
                     playlistID: res.id
-                })
+                });
                 this.addTracks()
             })
             .catch(err => console.log(err));
@@ -87,11 +101,11 @@ export default class App extends Component {
     addTracks() {
         spotifyWebApi.addTracksToPlaylist(this.state.playlistID, this.state.artistSetURIs)
             .then(res => {
-                this.setState({
-                    artistSetURIs: []
-                })
+                console.log(res)
             })
-            .catch(err => console.log(err));
+            .catch(err => {
+                console.log(err)
+            });
     }
 
 
@@ -112,6 +126,13 @@ export default class App extends Component {
 
         return axios.get(`${searchArtistURL}?${params}`, searchArtistConfig)
             .then(res => {
+                console.log(res.data)
+                this.setState({
+                    playlistTracks: [],
+                    artistSetURIs: [],
+                    artistName: res.data.artist[0].name
+                });
+                key = 0;
                 this.searchSetlists(res.data.artist[0].mbid)
             })
 
@@ -145,7 +166,8 @@ export default class App extends Component {
                 this.setState({
                     artistSetDate: res.data.setlist[0].eventDate
                 })
-                this.getUserID()
+                this.getUserID();
+                console.log(res.data)
             })
             .catch(err => console.log(err));
     }
@@ -257,11 +279,20 @@ export default class App extends Component {
 
         return (
             <div className="App">
-                <Container maxWidth="sm">
-                    <PaperDiv>
-                        { home }
-                    </PaperDiv>
-                </Container>
+                <Grid container
+                    direction="column"
+                    justify="center"
+                    alignItems="center"
+                >
+                    <Grid item>
+                        <PaperDiv>
+                            { home }
+                        </PaperDiv>
+                    </Grid>
+                    <Grid item>
+                        {this.state.playlistTracks}
+                    </Grid>
+                </Grid>
             </div>
         );
     }
