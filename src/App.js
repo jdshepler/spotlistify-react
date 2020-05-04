@@ -12,13 +12,14 @@ export default class App extends Component {
         const params = this.getHashParams();
         const token = params.access_token;
 
-
         this.onChangeArtist = this.onChangeArtist.bind(this);
         this.searchArtist = this.searchArtist.bind(this);
         this.state = {
             loggedIn: token ? true: false,
+            userID: '',
             artistName: '',
-            artistSet: [],
+            artistSetURIs: [],
+            playlistID: '',
 
         }
         if (token){
@@ -26,11 +27,63 @@ export default class App extends Component {
         }
     }
 
+    getHashParams() {
+        var hashParams = {};
+        var e, r = /([^&;=]+)=?([^&;]*)/g,
+            q = window.location.hash.substring(1);
+        e = r.exec(q)
+        while (e) {
+            hashParams[e[1]] = decodeURIComponent(e[2]);
+            e = r.exec(q);
+        }
+        return hashParams;
+    }
+
     onChangeArtist(e) {
         this.setState({
             artistName: e.target.value
         })
     }
+
+    searchSpotifyTracks(songName, artistName) {
+        let query = songName + " " + artistName;
+        spotifyWebApi.searchTracks(query)
+            .then(res => {
+                this.state.artistSetURIs.push(res.tracks.items[0].uri)
+            })
+            .catch(err => console.log(err));
+    }
+
+    getUserID() {
+        spotifyWebApi.getMe()
+            .then(res => {
+                console.log(res)
+                this.setState({
+                    userID: res.id
+                })
+                console.log(this.state.userID)
+                this.createSetlistPlaylist()
+            })
+            .catch(err => console.log(err));
+    }
+
+    createSetlistPlaylist() {
+        spotifyWebApi.createPlaylist(this.state.userID, {name: "Test playlist"})
+            .then(res => {
+                this.setState({
+                    playlistID: res.id
+                })
+                this.addTracks()
+            })
+            .catch(err => console.log(err));
+    }
+
+    addTracks() {
+        spotifyWebApi.addTracksToPlaylist(this.state.playlistID, this.state.artistSetURIs)
+            .then(res => console.log(res))
+            .catch(err => console.log(err));
+    }
+
 
     searchArtist() {
         const searchArtistURL = "https://cors-anywhere.herokuapp.com/https://api.setlist.fm/rest/1.0/search/artists";
@@ -76,11 +129,11 @@ export default class App extends Component {
             .then(res => {
                 var x;
                 for (x in res.data.setlist[0].sets.set[0].song)
-                    this.state.artistSet.push(res.data.setlist[0].sets.set[0].song[x].name);
-                    let query = res.data.setlist[0].sets.set[0].song[x].name + this.state.artistName;
-                    console.log(spotifyWebApi.searchTracks(query));
+                    // this.state.artistSet.push(res.data.setlist[0].sets.set[0].song[x].name);
+                    this.searchSpotifyTracks(res.data.setlist[0].sets.set[0].song[x].name, this.state.artistName)
 
                 console.log(this.state.artistSet)
+                this.getUserID()
             })
 
 
@@ -88,25 +141,11 @@ export default class App extends Component {
             .catch(err => console.log(err));
     }
 
-
-
-    getHashParams() {
-        var hashParams = {};
-        var e, r = /([^&;=]+)=?([^&;]*)/g,
-            q = window.location.hash.substring(1);
-        while ( e === r.exec(q)) {
-            hashParams[e[1]] = decodeURIComponent(e[2]);
-        }
-        return hashParams;
-    }
-
     render() {
         let home;
         if (this.state.loggedIn) {
-            home = ( <a href='http://localhost:8888' > Login to Spotify </a> )
-        } else {
-            home = (<div>
-                    <a href='http://localhost:8888' > Login to Spotify </a>
+            home = (
+                <div>
                     <TextField
                         id="filled-number"
                         label="Enter Artist's Name"
@@ -115,7 +154,10 @@ export default class App extends Component {
                         onChange={this.onChangeArtist}
                     />
                 </div>
-                )
+            )
+
+        } else {
+            home = ( <a href='http://localhost:8888' > Login to Spotify </a> )
         }
         return (
             <div className="App">
