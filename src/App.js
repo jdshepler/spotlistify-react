@@ -6,15 +6,44 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import Container from '@material-ui/core/Container';
 import Alert from '@material-ui/lab/Alert';
 import styled from 'styled-components';
+import clsx from 'clsx';
+import { withStyles } from "@material-ui/core/styles";
 
 
 const spotifyWebApi = new Spotify();
 let key = 0;
 
-export default class App extends Component {
+const styles = {
+    root: {
+        '& label.Mui-focused': {
+            color: 'white',
+        },
+        '& .MuiInput-underline:after': {
+            borderBottomColor: 'white',
+        },
+        '& .MuiOutlinedInput-root': {
+            '& fieldset': {
+                borderColor: 'white',
+            },
+            '&:hover fieldset': {
+                borderColor: 'white',
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: 'white',
+            },
+        },
+    },
+    input: {
+        color: 'white'
+    },
+    cssLabel: {
+        color : 'white'
+    },
+};
+
+class App extends Component {
     constructor(props) {
         super(props);
         const params = this.getHashParams();
@@ -138,7 +167,19 @@ export default class App extends Component {
 
 
             // .then(data => this.getArtistMBID(data))
-            .catch(err => console.log(err));
+            .catch(err => {
+                this.setState({
+                    playlistTracks: [],
+                })
+                this.state.playlistTracks.push(
+                    <Alert severity="error" key={1} style={{margin: '5px'}}>
+                        Error! Could not find artist: <b> {this.state.artistName} </b>
+                    </Alert>)
+                this.setState({
+                    artistName: ''
+                })
+                console.log(err)
+            });
     }
 
     searchSetlists(artistMBID) {
@@ -169,7 +210,19 @@ export default class App extends Component {
                 this.getUserID();
                 console.log(res.data)
             })
-            .catch(err => console.log(err));
+            .catch(err => {
+                this.setState({
+                    playlistTracks: [],
+                })
+                this.state.playlistTracks.push(
+                    <Alert severity="error" key={1} style={{margin: '5px'}}>
+                        Error! <b> Too many requests, try again later </b>
+                    </Alert>)
+                this.setState({
+                    artistName: ''
+                })
+                console.log(err)
+            });
     }
 
     render() {
@@ -181,8 +234,11 @@ export default class App extends Component {
             flex-direction: column;
             align-items: center;
             padding: 25px;
+            border: 3px solid white;
             box-shadow: 13px 15px 29px 5px rgba(0,0,0,0.25);
         `;
+
+        const { classes, className } = this.props;
 
         let home;
         if (this.state.loggedIn) {
@@ -199,22 +255,28 @@ export default class App extends Component {
                             variant="h2"
                             style={{
                             color: 'white',
-                            fontFamily: 'Quicksand'
+                            fontFamily: 'Quicksand',
                         }}>
                             SPOTLISTIFY
                         </Typography>
                     </Grid>
                     <Grid item>
                         <TextField
+                            className={clsx(classes.root, className)}
+                            inputProps={{
+                                className: classes.input,
+                            }}
+                            InputLabelProps={{
+                                classes: {
+                                    root: classes.cssLabel,
+                                }
+                            }}
                         id="outlined-number"
                         label="Enter Artist's Name"
                         variant="outlined"
                         autoFocus
                         defaultValue={this.state.artistName}
                         onChange={this.onChangeArtist}
-                        style={{
-                            fontFamily: 'Quicksand'
-                        }}
                         />
                     </Grid>
                     <Grid item>
@@ -223,10 +285,11 @@ export default class App extends Component {
                             size="large"
                             onClick={this.searchArtist}
                             style={{
-                                color: 'black',
-                                background: 'linear-gradient(rgba(255,255,255, .9), rgba(255,255,255, .8)',
+                                color: 'white',
+                                border: '1px solid white',
+                                background: 'linear-gradient(rgba(225,196,138, .5), rgba(206,142,55, .6), rgba(114,38,35, .7), rgba(36,17,23, .8)',
                                 borderRadius: 10,
-                                fontFamily: 'Quicksand'
+                                fontFamily: 'Quicksand',
                             }}
                         >
                             Generate Playlist
@@ -297,3 +360,5 @@ export default class App extends Component {
         );
     }
 }
+
+export default withStyles(styles)(App);
